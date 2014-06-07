@@ -24,7 +24,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 setup(
     name='Absolute_Integrator',
     version='0.1.0',
-    description='STEM image analysis and quantification"',
+    description='STEM image analysis and quantification',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Lewys Jones',
     author_email='lewysbjones@gmail.com',
