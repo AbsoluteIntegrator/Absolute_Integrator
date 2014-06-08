@@ -1,15 +1,21 @@
-import ranger
-import template_match
+# next few lines automatically collect modules for whatever methods you've implemented.
+__all__ = ['ranger', 'template_match']
+# Don't modify the line above, or this line!
+import automodinit
+automodinit.automodinit(__name__, __file__, globals())
+del automodinit
 
-methods={"ranger": ranger,
-         "template_match": template_match,
-         }
+# OK to modify from here down.
+# create a dict of our modules to show what options are available to people
+__methods = dict()
+for module in __all__:
+    __methods[module] = eval(module)
 
 # default peak finding method is ranger.
 default_method = "Ranger"
 
 def list_methods():
-    print methods.keys
+    print(__methods.keys())
 
 def list_options(method):
     """
@@ -24,8 +30,8 @@ def list_options(method):
     Returns:
     dict : keys are options, values are descriptions of those options.
     """
-    if method.lower() in methods:
-        return methods[method.lower()].options
+    if method.lower() in __methods:
+        return __methods[method.lower()].options
 
 def peak_find(image, method=default_method, **options):
     """
@@ -49,9 +55,9 @@ def peak_find(image, method=default_method, **options):
         coordinate extraction routines.
     """
     # look up which method to use from the dict of methods
-    if method.lower() in methods:
-        method = methods[method.lower()]
+    if method.lower() in __methods:
+        method = __methods[method.lower()]
     else:
         raise ValueError("Peak finding method {:s} not recognized.  Available methods: {:s}".format(
-            method, str(methods.keys)))
+            method, str(__methods.keys())))
     return method.peak_find(image, **options)
