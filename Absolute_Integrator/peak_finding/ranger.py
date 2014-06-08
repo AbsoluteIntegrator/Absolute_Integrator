@@ -3,6 +3,21 @@ import numpy.linalg
 import scipy.signal
 from scipy.ndimage.morphology import binary_erosion
 
+# dictionary describing options available to tune this algorithm
+options = {
+    "best_size":{"purpose":"The estimate of the peak size, in pixels.  If 'auto', attempts to determine automatically.  Otherwise, this should be an integer.",
+                 "default":"auto"},
+    "refine_positions":{"purpose":"TODO",
+                        "default":False},
+    "sensitivity_threshold":{"purpose":"TODO",
+                             "default":0.34},
+    "start_search":{"purpose":"TODO",
+                    "default":3},
+    "end_search":{"purpose":"TODO",
+                  "default":"auto"},
+    "progress_object":{"purpose":"Object used to present a progress bar to the user.  For definition, see UI_interface folder.",
+                       "default":None},
+}
 
 def estimate_1D_Gaussian_parameters(data, axis):
     center = np.sum(axis * data) / np.sum(data)
@@ -75,7 +90,6 @@ def filter_peaks(peaks, spread, sensitivity_threshold):
 def peak_find(image,
               best_size="auto",
               refine_positions=False,
-              show_progress=False,
               sensitivity_threshold=0.34,
               start_search=3,
               end_search="auto",
