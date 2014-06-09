@@ -1,21 +1,28 @@
 """
-Tests for `Absolute_Integrator` module.
+Tests for `peak_finding` module.
 """
 import pytest
-from Absolute_Integrator import peak_finding
+import numpy as np
+
+import Absolute_Integrator.peak_finding as peak_finding
 import pattern
 
-class TestPeakFinding(object):
-    data=None
+def test_list_methods():
+    assert len(peak_finding.list_methods())>0
+        
+def test_list_options():
+    methods = peak_finding.list_methods()
+    # if any methods are missing the options object, this will raise an exception.
+    for method in methods:
+        peak_finding.list_options(method)
 
-    @classmethod
-    def setup_class(cls):
-        self.data = pattern.get_test_pattern((256, 256))
+def test_methods():
+    data, npeaks = pattern.get_test_pattern((256, 256))
+    methods = peak_finding.list_methods()
+    for method in methods:
+        peaks = peak_finding.peak_find(data, method=method)
+        assert peaks.shape==(npeaks,2)
 
-    def test_ranger(self):
-        peaks = peak_finding.peak_find(self.data, method="Ranger")
-        assert peaks.shape==(20,2)
-
-    @classmethod
-    def teardown_class(cls):
-        pass
+def test_invalid_method():
+    with pytest.raises(ValueError):
+        peak_finding.peak_find(np.zeros((10,10)), method="Invalid")

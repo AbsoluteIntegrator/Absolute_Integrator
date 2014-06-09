@@ -25,6 +25,8 @@ def get_test_pattern(pattern_size=(1024,1024), initial_position=(16,16),
     xg, yg = np.mgrid[0:peak_size*2, 0:peak_size*2]
     data = gaussian(255, (frame_size/2)+1, (frame_size/2)+1, (peak_size/4)+1, 
         (peak_size/4)+1)(xg, yg)
+    
+    npeaks=0
 
     while positionY < (test_array.shape[1]-data.shape[1]):
         while positionX < (test_array.shape[1]-data.shape[0]):
@@ -35,6 +37,7 @@ def get_test_pattern(pattern_size=(1024,1024), initial_position=(16,16),
             test_array[positionY:positionY+data.shape[0], 
                     positionX:positionX+data.shape[1]] += data
             positionX+=offset
+            npeaks+=1
         positionX = initial_position[1]
         positionY+=offset
     # do the distorted peaks                
@@ -77,8 +80,9 @@ def get_test_pattern(pattern_size=(1024,1024), initial_position=(16,16),
             test_array[positionY:positionY+data.shape[0]+yOffset, 
                     positionX:positionX+data.shape[1]+xOffset] += data
             positionX+=offset
+            npeaks+=1
         positionX = initial_position[1]
         xOffset=0
         yOffset=0
         positionY+=offset
-    return test_array
+    return test_array, npeaks
