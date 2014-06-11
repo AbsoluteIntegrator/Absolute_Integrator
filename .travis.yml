@@ -1,0 +1,34 @@
+# Config file for automatic testing at travis-ci.org
+
+language: python
+
+python:
+  - "3.3"
+  - "2.7"
+
+before_install:
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.3.0-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.3.0-Linux-x86_64.sh -O miniconda.sh; fi
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then export PATH=/home/travis/miniconda/bin:$PATH; else export PATH=/home/travis/miniconda3/bin:$PATH; fi
+  - conda update --yes conda
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - conda create --yes -n env_name python=$TRAVIS_PYTHON_VERSION pip numpy scipy
+  - source activate env_name
+  # Coverage packages are on Dan Blanchard's binstar channel
+  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - pip install pytest pytest-cov
+  - pip install -r requirements.txt
+
+# command to run tests, e.g. python setup.py test
+script:
+  - py.test --cov Absolute_Integrator test/
+
+# Calculate coverage
+after_success:
+  - coveralls --config_file .coveragerc
