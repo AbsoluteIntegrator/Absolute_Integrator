@@ -28,7 +28,7 @@ setup(
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Lewys Jones',
     author_email='lewysbjones@gmail.com',
-    url='https://github.com/LewysJones/Absolute_Integrator',
+    url='https://github.com/AbsoluteIntegrator/Absolute_Integrator',
     packages=[
         'Absolute_Integrator',
     ],

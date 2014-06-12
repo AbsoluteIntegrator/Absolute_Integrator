@@ -1,1 +1,0 @@
-The normalization of ADF data requires two values to be known, the D.C. offset and the effective detector sensitivity. The effective detector sensitivity is the combined effect of the intrinsic sensitivity of the detector and the amplifier gain.
