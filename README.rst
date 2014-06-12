@@ -14,7 +14,7 @@ Absolute_Integrator
 .. image:: https://coveralls.io/repos/AbsoluteIntegrator/Absolute_Integrator/badge.png 
     :target: https://coveralls.io/r/AbsoluteIntegrator/Absolute_Integrator
 
-STEM image analysis and quantification"
+STEM image analysis and quantification
 
 
 Features
