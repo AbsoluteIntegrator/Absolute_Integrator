@@ -19,10 +19,6 @@ def get_test_pattern(pattern_size=(1024,1024), initial_position=(16,16),
     initial_position = np.array(initial_position)
     positionX = initial_position[1]
     positionY = initial_position[0]
-    # the offset between peaks
-    offset = 32
-    peak_size = 17
-    frame_size = 32
 
     # the normal gaussian
     xg, yg = np.mgrid[0:peak_size*2, 0:peak_size*2]
