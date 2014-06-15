@@ -5,18 +5,25 @@ from scipy.ndimage.morphology import binary_erosion
 
 # dictionary describing options available to tune this algorithm
 options = {
-    "best_size":{"purpose":"The estimate of the peak size, in pixels.  If 'auto', attempts to determine automatically.  Otherwise, this should be an integer.",
-                 "default":"auto"},
-    "refine_positions":{"purpose":"TODO",
-                        "default":False},
-    "sensitivity_threshold":{"purpose":"TODO",
-                             "default":0.34},
-    "start_search":{"purpose":"TODO",
-                    "default":3},
-    "end_search":{"purpose":"TODO",
-                  "default":"auto"},
-    "progress_object":{"purpose":"Object used to present a progress bar to the user.  For definition, see UI_interface folder.",
-                       "default":None},
+    "best_size":{"purpose": "Estimate of the distance between peaks, in pixels.  If 'auto', attempts to determine automatically.  Otherwise, this should be an odd integer.",
+                 "default": "auto",
+                 "type": "int",
+                 "has_auto": True},
+    "refine_positions":{"purpose": "TODO",
+                        "default": False,
+                        "type": "bool"},
+    "sensitivity_threshold":{"purpose": "TODO",
+                             "default": 0.34,
+                             "type": "float"},
+    "start_search":{"purpose": "TODO",
+                    "default": 3,
+                    "type": "int"},
+    "end_search":{"purpose": "TODO",
+                  "default": "auto",
+                  "type": "int",
+                  "has_auto": True},
+    "progress_object":{"purpose": "Object used to present a progress bar to the user.  For definition, see UI_interface folder.",
+                       "default": None},
 }
 
 def estimate_1D_Gaussian_parameters(data, axis):
@@ -44,6 +51,8 @@ def get_trial_size(image, best_size="auto"):
 
 def get_end_search(image, end_search="auto"):
     im_dim = image.shape
+    # Search should terminate around 1/8th of the smallest image dimension. Any larger has no physcial meaning
+    # (fewer than 4 periodic features at the Nyquist limit).  Must also be rounded to the neareast ODD number.    
     if end_search== "auto":
         return 2 * np.floor(( float(np.min(im_dim)) / 8) / 2) - 1
     else:
@@ -107,7 +116,7 @@ def peak_find(image,
     big = get_end_search(image, end_search)
             
     # TODO: best_size needs its auto-estimation routine
-    trial_size = get_trial_size(best_size)
+    trial_size = get_trial_size(image, best_size)
 
     # Create blank arrays.
     heights        = np.empty(image.shape) 
