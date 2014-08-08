@@ -13,7 +13,7 @@ for module in __all__:
 del module
 
 # default peak finding method is ranger.
-default_method = "Ranger"
+default_method = "log"
 
 def list_methods():
     return __methods.keys()
