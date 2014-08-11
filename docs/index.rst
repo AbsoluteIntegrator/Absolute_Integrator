@@ -24,4 +24,4 @@ If you have any suggestions or questions about **Absolute_Integrator** feel free
 at lewysbjones@gmail.com.
 
 If you encounter any errors or problems with **Absolute_Integrator**, please let me know!
-Open an Issue at the GitHub http://github.com/LewysJones/Absolute_Integrator main repository.
+Open an Issue at the GitHub http://github.com/AbsoluteIntegrator/Absolute_Integrator main repository.

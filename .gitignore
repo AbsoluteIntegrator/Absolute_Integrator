@@ -41,5 +41,7 @@ output/*/index.html
 # Sphinx
 docs/_build
 
-# IDE junk
+# IDE project files
 .idea/*
+*.wpr
+*.wpu
