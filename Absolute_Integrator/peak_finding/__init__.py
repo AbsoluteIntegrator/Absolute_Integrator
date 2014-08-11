@@ -15,6 +15,9 @@ del module
 # default peak finding method is ranger.
 default_method = "log"
 
+def get_default_method():
+    return default_method
+
 def list_methods():
     return __methods.keys()
 
@@ -38,7 +41,7 @@ def list_options(method):
         raise ValueError("Peak finding method {:s} not recognized.  Available methods: {:s}".format(
             method, str(list_methods())))
 
-def peak_find(image, method=default_method, **options):
+def run(image, method=default_method, **options):
     """
     Executes a peak finding method on given data.
 
@@ -66,4 +69,4 @@ def peak_find(image, method=default_method, **options):
     else:
         raise ValueError("Peak finding method {:s} not recognized.  Available methods: {:s}".format(
             method, str(list_methods())))
-    return method.peak_find(image, **options)
+    return method.run(image, **options)
