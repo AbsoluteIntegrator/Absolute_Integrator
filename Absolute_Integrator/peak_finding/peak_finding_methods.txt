@@ -1,0 +1,7 @@
+Define any peak finding methods you like in this folder.  For things to work automatically with the higher-level API, you must have two things:
+
+1. an object called "options" that lists your method's options.  For an example, see ranger.py.
+2. A function named peak_find, that takes its first argument to be the 2D image to find peaks on.
+
+Everything else is up to you.  Any additional arguments to your peak_find function should be included in the "options" object - people will
+have to pass these by name.
