@@ -1,2 +1,4 @@
 wheel>=0.22
 automodinit
+skimage
+numpy
