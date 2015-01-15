@@ -1,5 +1,4 @@
-# next few lines automatically collect modules for whatever methods you've implemented.
-__all__ = ['ranger', 'template_match']
+__all__ = ['log', 'ranger', 'template_match']
 # Don't modify the line above, or this line!
 import automodinit
 automodinit.automodinit(__name__, __file__, globals())

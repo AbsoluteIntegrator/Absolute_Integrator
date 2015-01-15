@@ -1,5 +1,4 @@
-# next few lines automatically collect modules for whatever methods you've implemented.
-__all__ = ['ranger', 'template_match']
+__all__ = ['background_subtraction', 'peak_width_estimation']
 # Don't modify the line above, or this line!
 import automodinit
 automodinit.automodinit(__name__, __file__, globals())
