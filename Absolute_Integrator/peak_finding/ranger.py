@@ -1,7 +1,8 @@
 import numpy as np
-import numpy.linalg
 import scipy.signal
 from scipy.ndimage.morphology import binary_erosion
+from scipy.ndimage.morphology import white_tophat
+from scipy.ndimage.filters import gaussian_filter
 
 # dictionary describing options available to tune this algorithm
 options = {
@@ -19,15 +20,13 @@ options = {
                        "default":None},
 }
 
-def estimate_1D_Gaussian_parameters(data, axis):
-    center = np.sum(axis * data) / np.sum(data)
-    sigma = np.sqrt(np.abs(np.sum((axis - center) ** 2 * data) / np.sum(data)))
-    height = data.max()
-    return center, sigma, height
+def normalise_dynamic_range(image):
+    image -= image.min()
+    image /= image.max()
+    return image
 
-def remove_dc_offset(image):
-    """ Removes 'DC offset' from image to simplify Gaussian fitting. """
-    return (image - image.min()).astype("float32")
+
+    return image - gaussian_filter(image, filter_width)
 
 def get_data_shape(image):
     """ Returns data shape as (columns, rows).  
@@ -40,7 +39,7 @@ def get_data_shape(image):
 
 def get_trial_size(image, best_size="auto"):
     """ TODO: automatically estimate best box size """
-    return 10
+    return 19
 
 def get_end_search(image, end_search="auto"):
     im_dim = image.shape
@@ -50,25 +49,37 @@ def get_end_search(image, end_search="auto"):
         return end_search
 
 def fit_block(block, base_axis):
-    x, sx, hx = estimate_1D_Gaussian_parameters(np.sum(block, axis=0), base_axis) # The horizontal offset refinement.
-    y, sy, hy = estimate_1D_Gaussian_parameters(np.sum(block, axis=1), base_axis) # The vertical offset refinement.
-                
-    # use base_axis length as way of not passing trial_size as parameter
-    height = (hx+hy) /(2*len(base_axis))  # Calculates the height of the fitted Gaussian.
-    spread =   2.3548 * np.sqrt(sx ** 2 + sy ** 2)  # 2D FWHM
+    A = np.vstack([base_axis**2 , base_axis , np.ones(base_axis.size)]).T
+    h_profile = np.sum(block, axis=0)
+    v_profile = np.sum(block, axis=1)
+    solution_h = np.linalg.lstsq(A, np.log(h_profile))[0]
+    solution_v = np.linalg.lstsq(A, np.log(v_profile))[0]
+
+    y = -solution_v[1]/solution_v[0]/2.0
+    x = -solution_h[1]/solution_h[0]/2.0
+    height = ( h_profile.max() + v_profile.max() ) / 2.0
+    spread = np.sqrt((np.abs(solution_h[0])+np.abs(solution_v[0])) / 4.0)
+
     return y, x, height, spread
 
 # Feature identification section:
-def filter_peaks(normalized_heights, spread, offset_radius, trial_size, sensitivity_threshold):
+def filter_peaks(normalized_heights, spread, offset_radii, trial_size, sensitivity_threshold):
+
+    # Normalise distances and heights:
     normalized_heights[normalized_heights < 0] = 0  # Forbid negative (concave) Gaussians.
-    offset_radius[offset_radius == 0] = np.nan  # Remove zeros values to prevent division error later.
+    spread /= trial_size
+    spread(spread > sqrt(2)) = sqrt(2) ;
+    spread(spread == 0) = sqrt(2) ;
+    offset_radii = offset_radii / trial_size
+    offset_radii[offset_radii == 0] = 0.001  # Remove zeros values to prevent division error later.
+
     # Create search metric and screen impossible peaks:
-    search_record = normalized_heights / offset_radius
-    search_record[search_record > 1] = 1 
-    search_record[search_record < 0] = 0 
-    search_record[spread < 0.05] = 0       # Invalidates negative Gaussian widths.
+    search_record = normalized_heights / offset_radii
+    search_record /= 100.0
+    search_record[search_record > 1] = 1
+    search_record[spread < 0.5] = 0       # Invalidates negative Gaussian widths.
     search_record[spread > 1] = 0          # Invalidates Gaussian widths greater than a feature spacing.
-    search_record[offset_radius > 1] = 0    # Invalidates Gaussian widths greater than a feature spacing.
+    search_record[offset_radii > 1] = 0    # Invalidates Gaussian widths greater than a feature spacing.
     kernel = int(np.round(trial_size/3))
     if kernel % 2 == 0:
         kernel += 1
@@ -86,7 +97,7 @@ def filter_peaks(normalized_heights, spread, offset_radius, trial_size, sensitiv
 def peak_find(image,
               best_size="auto",
               refine_positions=False,
-              sensitivity_threshold=0.34,
+              sensitivity_threshold=33,
               start_search=3,
               end_search="auto",
               progress_object=None):
@@ -98,46 +109,49 @@ def peak_find(image,
         ddf
             
     """
-    # Removes 'DC offset' from image to simplify Gaussian fitting.
-    input_offset = remove_dc_offset(image)
+    # TODO: best_size needs its auto-estimation routine
+    trial_size = get_trial_size(best_size)
+
+    # Removes slowly varying background from image to simplify Gaussian fitting.
+    input_offset = white_tophat(image, 2*trial_size)
 
     # image dimension sizes, used for loop through image pixels
     m, n = get_data_shape(image)
 
     big = get_end_search(image, end_search)
             
-    # TODO: best_size needs its auto-estimation routine
-    trial_size = get_trial_size(best_size)
-
     # Create blank arrays.
-    heights        = np.empty(image.shape) 
-    spread         = np.empty(image.shape)
-    x              = np.empty(image.shape)
-    y              = np.empty(image.shape)
+    heights        = np.empty(image.shape, dtype=np.float32)
+    spreads         = np.empty(image.shape, dtype=np.float32)
+    xs              = np.empty(image.shape, dtype=np.float32)
+    ys              = np.empty(image.shape, dtype=np.float32)
 
         
     # Half of the trial size, equivalent to the border that will not be inspected.
     test_box_padding = int(( trial_size - 1 ) / 2.)
 
     # Coordinate set for X and Y fitting.  
-    base_axis = np.arange(-test_box_padding, test_box_padding+1)
+    base_axis = np.arange(-test_box_padding, test_box_padding+1., dtype=np.float32)
     # Followed by the restoration progress bar:
     if progress_object is not None:
         progress_object.set_title("Identifying Image Peaks...")
         progress_object.set_position(0)
-    for i in xrange(test_box_padding + 1 , m - ( test_box_padding + 1 )):
+    for i in range(test_box_padding + 1 , m - ( test_box_padding + 1 )):
         currentStrip = input_offset[ i - test_box_padding : i + test_box_padding +1] 
-        for j in xrange( test_box_padding + 1, n - ( test_box_padding + 1 )):
+        for j in range( test_box_padding + 1, n - ( test_box_padding + 1 )):
             I = currentStrip[:, j - test_box_padding : j + test_box_padding + 1]
-            y[i,j], x[i,j], heights[i,j], spread[i,j] = fit_block(I, base_axis)
+            y, x, height, spread = fit_block(I, base_axis)
+            ys[i, j] = y
+            xs[i, j] = x
+            heights[i, j] = height
+            spreads[i, j] = spread
             
             if progress_object is not None:
-                percentage_refined = ( ((trial_size-3.)/2.) / ((big-1.)/2.) ) +   ( ( (i-test_box_padding) / (m - 2*test_box_padding) ) / (((big-1)/2)))  # Progress metric when using a looping peak-finding waitbar.
+                percentage_refined = (((trial_size-3.)/2.) / ((big-1.)/2.)) +  (((i-test_box_padding) / (m - 2*test_box_padding)) / (((big-1)/2)))  # Progress metric when using a looping peak-finding waitbar.
                 progress_object.set_position(percentage_refined)
     # normalize peak heights
     heights = heights / ( np.max(input_offset) - np.min(input_offset) ) 
     # normalize fitted Gaussian widths
-    spread = spread / trial_size
-    offset_radius = np.sqrt(y**2 + x**2)  # Calculate offset radii.
-    offset_radius = offset_radius / trial_size
-    return filter_peaks(heights, spread, offset_radius, trial_size, sensitivity_threshold) 
+    spreads = spreads / trial_size
+    offset_radii = np.sqrt(ys**2 + xs**2)  # Calculate offset radii.
+    return filter_peaks(heights, spreads, offset_radii, trial_size, sensitivity_threshold)
